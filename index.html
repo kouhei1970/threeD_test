@@ -23,7 +23,7 @@
         scene.add(drone);
 
         // ドローンの軌跡（シリンダーでプロペラを模倣）
-        const propellerGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.02, 32);
+        const propellerGeometry = new THREE.CylinderGeometry(0.3, 0.3, 0.02, 32);
         const propellerMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
         const propeller1 = new THREE.Mesh(propellerGeometry, propellerMaterial);
         const propeller2 = propeller1.clone();
