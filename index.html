@@ -5,14 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Drone Simulation</title>
     <script src="https://cdn.jsdelivr.net/npm/three@0.152.0/build/three.min.js"></script>
-    
-    <meta property="og:title" content="Drone Simulation">
-    <meta property="og:description" content="Control a virtual drone using keyboard and touch inputs!">
-    <meta property="og:image" content="https://kouhei1970.github.io/threeD_test/threeD_drone.png">
-    <meta property="og:url" content="https://kouhei1970.github.io/threeD_test/">
-    <meta property="og:type" content="website">
-    <meta name="twitter:card" content="summary_large_image">
-
 </head>
 <body>
     <div id="simulation" style="width: 100%; height: 100vh; background-color: #000;"></div>
@@ -54,48 +46,68 @@
         // シミュレーション変数
         let pitch = 0, roll = 0, yaw = 0, altitude = 0;
 
+        // マウス操作変数
+        let isDragging = false; // ドラッグ中かどうか
+        let lastMouseX = 0, lastMouseY = 0; // 前回のマウス位置
+
         // ユーザー入力（キーボード）
         window.addEventListener('keydown', (event) => {
             switch (event.key) {
-                case 'w': pitch += 0.1; break; // 前傾
-                case 's': pitch -= 0.1; break; // 後傾
-                case 'a': roll -= 0.1; break;  // 左傾
-                case 'd': roll += 0.1; break;  // 右傾
-                case 'q': yaw -= 0.1; break;   // 左回転
-                case 'e': yaw += 0.1; break;   // 右回転
-                case 'ArrowUp': altitude += 0.1; break; // 上昇
-                case 'ArrowDown': altitude -= 0.1; break; // 降下
+                case 'w': pitch += 0.1; break;
+                case 's': pitch -= 0.1; break;
+                case 'a': roll -= 0.1; break;
+                case 'd': roll += 0.1; break;
+                case 'q': yaw -= 0.1; break;
+                case 'e': yaw += 0.1; break;
+                case 'ArrowUp': altitude += 0.1; break;
+                case 'ArrowDown': altitude -= 0.1; break;
             }
         });
 
-        // タッチイベント変数
+        // タッチ操作変数
         let touchStartX = 0, touchStartY = 0;
-        let touchDeltaX = 0, touchDeltaY = 0;
-
-        // タッチイベントリスナー
-        const simulationDiv = document.getElementById("simulation");
-        simulationDiv.addEventListener("touchstart", (event) => {
+        document.getElementById("simulation").addEventListener("touchstart", (event) => {
             const touch = event.touches[0];
             touchStartX = touch.clientX;
             touchStartY = touch.clientY;
         });
-
-        simulationDiv.addEventListener("touchmove", (event) => {
+        document.getElementById("simulation").addEventListener("touchmove", (event) => {
             event.preventDefault();
             const touch = event.touches[0];
-            touchDeltaX = touch.clientX - touchStartX;
-            touchDeltaY = touch.clientY - touchStartY;
-
-            roll += touchDeltaX * 0.005;  // 横移動
-            pitch -= touchDeltaY * 0.005; // 縦移動
-
+            roll += (touch.clientX - touchStartX) * 0.005;
+            pitch -= (touch.clientY - touchStartY) * 0.005;
             touchStartX = touch.clientX;
             touchStartY = touch.clientY;
         });
 
-        simulationDiv.addEventListener("touchend", () => {
-            touchDeltaX = 0;
-            touchDeltaY = 0;
+        // マウスイベント
+        const simulationDiv = document.getElementById("simulation");
+        simulationDiv.addEventListener("mousedown", (event) => {
+            isDragging = true;
+            lastMouseX = event.clientX;
+            lastMouseY = event.clientY;
+        });
+        simulationDiv.addEventListener("mousemove", (event) => {
+            if (isDragging) {
+                const deltaX = event.clientX - lastMouseX;
+                const deltaY = event.clientY - lastMouseY;
+                roll += deltaX * 0.005; // マウスのX移動でロール
+                pitch -= deltaY * 0.005; // マウスのY移動でピッチ
+                lastMouseX = event.clientX;
+                lastMouseY = event.clientY;
+            }
+        });
+        simulationDiv.addEventListener("mouseup", () => {
+            isDragging = false;
+        });
+        simulationDiv.addEventListener("mouseleave", () => {
+            isDragging = false; // マウスが外れた場合も停止
+        });
+
+        // ホイールで高度を制御
+        simulationDiv.addEventListener("wheel", (event) => {
+            altitude += event.deltaY * -0.001; // ホイールの上下で高度を調整
+            altitude = Math.max(0, altitude); // 高度は0未満にならないように
         });
 
         // アニメーションループ
