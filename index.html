@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.152.0/build/three.min.js"></script>
 </head>
 <body>
-    <div id="simulation" style="width: 100%; height: 100vh;"></div>
+    <div id="simulation" style="width: 100%; height: 100vh; background-color: #000;"></div>
     <script>
         // シーン、カメラ、レンダラーのセットアップ
         const scene = new THREE.Scene();
@@ -16,13 +16,13 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.getElementById("simulation").appendChild(renderer.domElement);
 
-        // ドローンのモデル（簡易ボックス）
+        // ドローンのモデル
         const droneGeometry = new THREE.BoxGeometry(1, 0.2, 1);
         const droneMaterial = new THREE.MeshBasicMaterial({ color: 0x00aa00 });
         const drone = new THREE.Mesh(droneGeometry, droneMaterial);
         scene.add(drone);
 
-        // ドローンの軌跡（シリンダーでプロペラを模倣）
+        // ドローンのプロペラ
         const propellerGeometry = new THREE.CylinderGeometry(0.45, 0.45, 0.02, 32);
         const propellerMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
         const propeller1 = new THREE.Mesh(propellerGeometry, propellerMaterial);
@@ -44,32 +44,9 @@
         camera.position.z = 5;
 
         // シミュレーション変数
-        let pitch = 0; // 前後の傾き
-        let roll = 0;  // 左右の傾き
-        let yaw = 0;   // 回転
-        let altitude = 0; // 高度
+        let pitch = 0, roll = 0, yaw = 0, altitude = 0;
 
-        // ドローンの動作ループ
-        function animate() {
-            requestAnimationFrame(animate);
-
-            // 回転の模倣
-            propeller1.rotation.y += 0.2;
-            propeller2.rotation.y += 0.2;
-            propeller3.rotation.y += 0.2;
-            propeller4.rotation.y += 0.2;
-
-            // シミュレーション更新
-            drone.rotation.x = pitch;
-            drone.rotation.z = roll;
-            drone.rotation.y = yaw;
-            drone.position.y = altitude;
-
-            // レンダリング
-            renderer.render(scene, camera);
-        }
-
-        // ユーザーインタラクション
+        // ユーザー入力（キーボード）
         window.addEventListener('keydown', (event) => {
             switch (event.key) {
                 case 'w': pitch += 0.1; break; // 前傾
@@ -82,6 +59,56 @@
                 case 'ArrowDown': altitude -= 0.1; break; // 降下
             }
         });
+
+        // タッチイベント変数
+        let touchStartX = 0, touchStartY = 0;
+        let touchDeltaX = 0, touchDeltaY = 0;
+
+        // タッチイベントリスナー
+        const simulationDiv = document.getElementById("simulation");
+        simulationDiv.addEventListener("touchstart", (event) => {
+            const touch = event.touches[0];
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+        });
+
+        simulationDiv.addEventListener("touchmove", (event) => {
+            event.preventDefault();
+            const touch = event.touches[0];
+            touchDeltaX = touch.clientX - touchStartX;
+            touchDeltaY = touch.clientY - touchStartY;
+
+            roll += touchDeltaX * 0.005;  // 横移動
+            pitch -= touchDeltaY * 0.005; // 縦移動
+
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+        });
+
+        simulationDiv.addEventListener("touchend", () => {
+            touchDeltaX = 0;
+            touchDeltaY = 0;
+        });
+
+        // アニメーションループ
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // プロペラの回転
+            propeller1.rotation.y += 0.2;
+            propeller2.rotation.y += 0.2;
+            propeller3.rotation.y += 0.2;
+            propeller4.rotation.y += 0.2;
+
+            // ドローンの姿勢と位置を更新
+            drone.rotation.x = pitch;
+            drone.rotation.z = roll;
+            drone.rotation.y = yaw;
+            drone.position.y = altitude;
+
+            // レンダリング
+            renderer.render(scene, camera);
+        }
 
         // アニメーション開始
         animate();
